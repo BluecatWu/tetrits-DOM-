@@ -6,7 +6,7 @@
 
 var tetris=
 {
-    SIZE:Shape.prototype.size,
+    SIZE:Shape.prototype.SIZE,
     currentShape:null,
     nextShape:null,
     timer:null,
@@ -19,10 +19,10 @@ var tetris=
     level:null,
     LN:50,
     INTERAL:100,
-    min-interval:100,
+    MIN:100,
     lines:null,
     score:null,
-    SCORES:[10,30,60,100]
+    SCORES:[10,30,60,100],
 //游戏开始
 //如果有gameover界面,就清除gameover界面
 //当前游戏状态为运行中,当前时间间隔为500,当前等级是1,当前消除行是0,当前得分为0(同时反映在页面上),
@@ -42,7 +42,7 @@ var tetris=
 //81(q) 如果运行中,执行quit方法
 //83(s) 如果游戏结束 执行start方法
 
-    gamestart:function
+    start:function()
     {
         if(playground.lastElementChild.nodeName=="img")
         {
@@ -85,22 +85,23 @@ var tetris=
                 case 83:me.state==me.GAMEOVER&&me.start();break;
             }
         }
-    }
-}
+    },
 
-//游戏引擎都是定时器
-//定义Tetris定时器回调函数,可实现shape下落动画
 
-//如果当前状态是RUNNING
-//如果当前主角canMove('d')
-//move('d') ,设置定时器绑定回调函数
-//否则
-//调用落入墙中函数
-//如果游戏结束,quit
-//否则
-//用nextShape的type和state来创建新的currentShape
-//将预览区清空
-//创建新的预览对象 居中  删除所有行
+
+    //游戏引擎都是定时器
+    //定义Tetris定时器回调函数,可实现shape下落动画
+
+    //如果当前状态是RUNNING
+    //如果当前主角canMove('d')
+    //move('d') ,设置定时器绑定回调函数
+    //否则
+    //调用落入墙中函数
+    //如果游戏结束,quit
+    //否则
+    //用nextShape的type和state来创建新的currentShape
+    //将预览区清空
+    //创建新的预览对象 居中  删除所有行
     timerFun:function ()
     {
         if(this.state==this.Running)
@@ -128,51 +129,101 @@ var tetris=
             }
         }
 
-    }
+    },
 
 
 
 
-//定义落入墙中函数
-//遍历imgs,同时声明img,r,c
-//将imgs保存如img中,
-//取得行下标
-//列下标
-//如果r>=0 ,将img保存强中同样rc位置处
+    //定义落入墙中函数
+    //遍历imgs,同时声明img,r,c
+    //将imgs保存如img中,
+    //取得行下标
+    //列下标
+    //如果r>=0 ,将img保存强中同样rc位置处
 
 
-landIntoWall:function ()
-{
-    for(var i= 0,img= 0,r= 0,c=0;i<4;i++)
+    landIntoWall:function ()
     {
-        img=this.currentShape.imgs[i];
-        r=parseFloat(img.style.top)/this.SIZE
-        C=parseFloat(img.style.left)/this.SIZE
-        r>=0&&(this.wall[r][c]=img)
-    }
-}
+        for(var i= 0,img= 0,r= 0,c=0;i<4;i++)
+        {
+            img=this.currentShape.imgs[i];
+            r=parseFloat(img.style.top)/this.SIZE
+            C=parseFloat(img.style.left)/this.SIZE
+            r>=0&&(this.wall[r][c]=img)
+        }
+    },
 
 
-//判断游戏是否结束
-//将下一个主角当前形状当前状态保存如state中
-//遍历 同时声明r c R
-//将当前主角的下标保存到R
-//如果R<0 返回ture  游戏结束
-//将下一个对象当前状态的left top值+top和left分别保存如rc中
-//如果r>=0且下一个对象人一个方块在墙中不为空,则游戏结束
-//否则返回false
+
+
+    //判断游戏是否结束
+    //将下一个主角当前形状当前状态保存在state中
+    //遍历 同时声明r c R
+    //将当前主角的下标保存到R
+    //如果R<0 返回ture  游戏结束
+    //将下一个对象当前状态的left top值+top和left分别保存如rc中
+    //如果r>=0且下一个对象人一个方块在墙中不为空,则游戏结束
+    //否则返回false
+
+    isGameOver:function ()
+    {
+        var state=this.nextShape.types[this.nextShape.type].states[this.nextShape.state];
+        for(var i= 0,r= 0,c= 0,R=0;i<4;i++)
+        {
+            R=parseFloat(this.currentShape.imgs[i].top)/this.SIZE;
+            if(R<0)
+            {
+                return true;
+            }
+            r=state[i][1]+this.nextShape.top;
+            c=state[i][0]+this.nextShpae.left;
+            if(r>=0&&this.wall[r][c])
+            {
+                return true;
+            }
+        }
+        return false;
+    },
+
 
     //判断空白墙方法
     //遍历墙中最后一个空白墙
     //如果有空白墙返回r否则返回-1
 
+    getLastEmptyWall:function ()
+    {
+        for(var r=19;r>0;r--)
+        {
+            for(var c=0;!this.wall[r][c]&&c<10;c++)
+                if(c==10){return r}
+        }
+        return -1
+    },
+
 
     //删除一行方法
     //遍历c删除满足row的一整行
     //将改行以上的所有行下移
-    //
 
-
+    deleteRow:function (row)
+    {
+        for(var c=0 ;c<10;c++)
+        {
+            displayArea.removeChild(this.wall[row][c])
+        }
+        for(var r=row,endR=this.getLastEmptyWall;r>endR;r--)
+        {
+            for(var c=0;c<10;c++)
+            {
+                this.wall[r][c]=this.wall[r-1][c];
+                if(this.wall[r][c])
+                {
+                    var top=parseFloat(this.wall[r][c].style.top)+this.SIZE+"px";
+                    this.wall[r][c].style.top=top;
+                }
+            }
+        }
+    },
 
 
     //删除行方法
@@ -192,26 +243,95 @@ landIntoWall:function ()
     //否则
     //调用回调函数
 
-//调用deleteRows定时器回调函数
+    //调用deleteRows定时器回调函数
 
+    deleteRow:function ()
+    {
+        var r=19;var i=0;
+        endR=this.getLastEmptyWall();
+        function timerFun()
+        {
+            while(r>endR)
+            {
+                for( var c=0;this.wall[r][c]&&c<10;c++)
+                {
+                    if(c==0)
+                    {
+                        this.deleteRow(r)
+                        i++;
+                        this.lines++;
+                        lines.innerHTML=this.lines;
+                        if(this.lines%ln==0)
+                        {
+                            this.level++
+                            lever.innerHTML=this.level;
+                            this.interval-=this.LINTERVAL;
+                            this.interval<this.MIN&&(this.interval=this.MIN);
 
-
+                        }
+                        break;
+                    }r--
+                }
+            }
+            if(r==endR)
+            {
+                this.score+=this.SCORES[i];
+                score.innerHTML=this.score;
+                this.timerFun();
+            }
+            else
+            {
+                this.timerFun();
+            }
+        }
+        timerFun.call(this);
+    },
     //暂停方法
     //将当前状态改为pause
     //new一个img
-//img的src为img/pause.png
+    //img的src为img/pause.png
     //为playground添加img
 
+    pause:function ()
+    {
+        this.state=this.pause;
+        var img=new Image();
+        img.src="img/pause.png"
+        playground.appendChild(img);
+    },
 
     //继续方法
     //将当前状态改为running
     //移除最后一个子元素
     //启用定时器
-
+    myContinue:function ()
+    {
+        this.state=this.Running;
+        playground.removeChild(playground.lastElementChild);
+        timerFun();
+    },
 
     //退出方法
     //将定时器改为null
     //将当前状态改为游戏结束
     //new一个img
-//img.src=img/gameove
+    //img.src=img/gameove
     //将img添加到playground中
+
+    quit:function ()
+    {
+        this.timer=null;
+        this.state=this.isGameOver;
+        var img = new Image();
+        img.src=img/gameover.png;
+        playground.appendChild(img);
+    }
+
+}
+
+
+
+
+
+
+
